@@ -76,3 +76,35 @@ The contab is used to call all scripts at the correct time. The crontab also out
 # Other steps
 add the ssh key of the collector to the authorized keys to allow access to the virtual machine:
 - Copy the contents of the generated public key to `~/.ssh/authorized_keys`
+
+---
+
+## RouterOS Simple Honeypot (`routeros_simple_honeypot.rsc`)
+
+Este script oferece uma solução de honeypot mais leve e nativa para MikroTik RouterOS, utilizando as funcionalidades de firewall do próprio roteador. Ele monitora tentativas de conexão a portas comumente atacadas na interface WAN e adiciona os IPs de origem a uma `address-list` de `blacklist`, bloqueando futuras tentativas de acesso.
+
+### Como Funciona:
+
+1.  **`address-list` `blacklist`**: Uma lista dinâmica de IPs é criada para armazenar os endereços dos potenciais atacantes.
+2.  **Regra de `filter` `input`**: Monitora o tráfego de entrada (`in-interface-list=WAN`) para portas específicas (FTP, SSH, Telnet, HTTP, HTTPS, Winbox, HTTP Alternativo) que ainda não fazem parte de uma conexão estabelecida (`connection-state=new`).
+3.  **`action=add-src-to-address-list`**: Se um IP tentar acessar uma dessas portas, ele é automaticamente adicionado à `blacklist` por 7 dias (`address-list-timeout=7d`).
+4.  **Regras de `drop`**: Qualquer tráfego vindo de um IP presente na `blacklist` é imediatamente descartado, tanto para o próprio roteador (`chain=input`) quanto para a rede interna (`chain=forward`).
+
+### Portas Monitoradas (Padrão):
+
+*   **21** (FTP)
+*   **22** (SSH)
+*   **23** (Telnet)
+*   **80** (HTTP)
+*   **443** (HTTPS)
+*   **8080** (HTTP Alternativo)
+*   **8291** (Winbox)
+
+### Uso:
+
+1.  **Copie o conteúdo** do arquivo `routeros_simple_honeypot.rsc`.
+2.  **Cole no terminal** do seu MikroTik RouterOS (via Winbox ou SSH).
+3.  **Ajuste as portas** monitoradas ou o tempo de bloqueio (`address-list-timeout`) conforme sua necessidade.
+4.  **Certifique-se** de que suas regras de firewall existentes não bloqueiem o tráfego antes que ele atinja esta regra de honeypot, ou que esta regra esteja posicionada corretamente na sua cadeia de `filter` `input`.
+
+Este honeypot é uma camada de segurança adicional e não substitui outras práticas de segurança essenciais, como senhas fortes e atualização regular do RouterOS.
